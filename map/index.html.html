@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dark War: Survival Season 6 Map</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 20px;
+    background: #16213e;
+    border-bottom: 1px solid #0f3460;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .toolbar-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+  }
+
+  .toolbar h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #e94560;
+    margin-right: auto;
+  }
+
+  .hamburger {
+    display: none;
+    background: none;
+    border: 1px solid #0f3460;
+    border-radius: 4px;
+    color: #e0e0e0;
+    font-size: 20px;
+    padding: 4px 8px;
+    cursor: pointer;
+    line-height: 1;
+  }
+  .hamburger:hover { background: #0f3460; }
+
+  .toolbar-body {
+    display: contents;
+  }
+
+  .mobile-always {
+    display: contents;
+  }
+  .mobile-hidden {
+    display: contents;
+  }
+
+  .separator {
+    width: 1px;
+    height: 28px;
+    background: #0f3460;
+  }
+
+  .tool-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tool-group label {
+    font-size: 13px;
+    color: #a0a0b8;
+  }
+
+  @media (max-width: 800px) {
+    .toolbar {
+      padding: 8px 12px;
+      gap: 8px;
+    }
+    .toolbar-header { width: 100%; }
+    .toolbar h1 { font-size: 14px; }
+    .hamburger { display: block; }
+
+    /* Always-visible row: colors + export */
+    .mobile-always {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+    }
+
+    /* Hidden section: only show when hamburger opened */
+    .mobile-hidden {
+      display: none;
+    }
+    .toolbar-body.open .mobile-hidden {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      width: 100%;
+      padding-top: 8px;
+      border-top: 1px solid #0f3460;
+    }
+
+    .separator { display: none; }
+    .swatch { width: 24px; height: 24px; }
+    .btn { padding: 5px 10px; font-size: 12px; }
+    .tolerance-group input[type="range"] { width: 60px; }
+    .canvas-container { padding: 8px; }
+    .edit-bar { padding: 6px 12px; gap: 6px; }
+    .edit-bar .btn { padding: 4px 8px; font-size: 11px; }
+    .hint { font-size: 11px; padding: 6px 12px; }
+  }
+
+  .color-swatches {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .swatch {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+
+  .swatch:hover { transform: scale(1.15); }
+  .swatch.active { border-color: #fff; transform: scale(1.15); }
+
+  input[type="color"] {
+    width: 28px;
+    height: 28px;
+    border: 2px solid #0f3460;
+    border-radius: 4px;
+    cursor: pointer;
+    background: none;
+    padding: 0;
+  }
+
+  input[type="color"]::-webkit-color-swatch-wrapper { padding: 1px; }
+  input[type="color"]::-webkit-color-swatch { border: none; border-radius: 2px; }
+
+  .btn {
+    padding: 6px 14px;
+    border-radius: 4px;
+    border: 1px solid #0f3460;
+    background: #16213e;
+    color: #e0e0e0;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .btn:hover { background: #0f3460; }
+  .btn.danger { border-color: #e94560; color: #e94560; }
+  .btn.danger:hover { background: #e94560; color: #fff; }
+
+  .tolerance-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tolerance-group input[type="range"] {
+    width: 80px;
+    accent-color: #e94560;
+  }
+
+  .tolerance-value {
+    font-size: 12px;
+    color: #a0a0b8;
+    min-width: 24px;
+  }
+
+  .canvas-container {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: auto;
+    padding: 20px;
+    position: relative;
+  }
+
+  .canvas-wrapper {
+    position: relative;
+    display: inline-block;
+  }
+
+  .canvas-wrapper canvas {
+    display: block;
+  }
+
+  #canvas {
+    background: #fff;
+    cursor: crosshair;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  .edit-dropdown {
+    position: relative;
+    display: inline-block;
+  }
+
+  .edit-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: #16213e;
+    border: 1px solid #0f3460;
+    border-radius: 4px;
+    padding: 4px;
+    z-index: 10;
+    white-space: nowrap;
+  }
+
+  .edit-dropdown-menu.open { display: flex; flex-direction: column; gap: 2px; }
+  .edit-dropdown-menu .btn { text-align: left; width: 100%; }
+
+  #overlayCanvas, #levelsCanvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+  }
+
+  .btn.active {
+    background: #0f3460;
+    border-color: #4a90d9;
+    color: #4a90d9;
+  }
+
+  .btn.edit-active {
+    background: #e94560;
+    border-color: #e94560;
+    color: #fff;
+  }
+
+  .edit-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 20px;
+    background: #0f3460;
+    border-bottom: 1px solid #e94560;
+    flex-shrink: 0;
+    flex-wrap: wrap;
+  }
+
+  .edit-bar label {
+    font-size: 13px;
+    color: #f5a623;
+    font-weight: 600;
+  }
+
+  .edit-bar .btn { font-size: 12px; }
+
+  #overlayCanvas.editing {
+    pointer-events: auto;
+    cursor: grab;
+  }
+
+  #overlayCanvas.adding {
+    pointer-events: auto;
+    cursor: crosshair;
+  }
+
+  .hint {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(22, 33, 62, 0.9);
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: #a0a0b8;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 0.8s ease;
+  }
+  .hint.hidden {
+    opacity: 0;
+  }
+
+  .zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .zoom-controls .btn {
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .zoom-label {
+    font-size: 12px;
+    color: #a0a0b8;
+    min-width: 36px;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="toolbar-header">
+    <h1>Dark War: Survival Season 6 Map</h1>
+    <button class="hamburger" id="hamburgerBtn">&#9776;</button>
+  </div>
+
+  <div class="toolbar-body" id="toolbarBody">
+
+    <!-- Always visible on mobile: colors + export -->
+    <div class="mobile-always">
+      <div class="tool-group">
+        <label>Color:</label>
+        <div class="color-swatches" id="swatches"></div>
+        <input type="color" id="customColor" value="#4a90d9" title="Custom color">
+      </div>
+      <div class="separator"></div>
+      <div class="tool-group">
+        <button class="btn" id="exportBtn">Export PNG</button>
+      </div>
+    </div>
+
+    <!-- Hidden on mobile until hamburger opened -->
+    <div class="mobile-hidden" id="mobileHidden">
+      <div class="separator"></div>
+
+      <div class="tool-group">
+        <label>Eraser:</label>
+        <button class="btn" id="eraserBtn" title="Erase a region back to white">Off</button>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="tool-group tolerance-group">
+        <label>Tolerance:</label>
+        <input type="range" id="tolerance" min="0" max="128" value="32">
+        <span class="tolerance-value" id="toleranceValue">32</span>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="tool-group zoom-controls">
+        <button class="btn" id="zoomOut">-</button>
+        <span class="zoom-label" id="zoomLabel">100%</span>
+        <button class="btn" id="zoomIn">+</button>
+        <button class="btn" id="zoomFit">Fit</button>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="tool-group">
+        <button class="btn active" id="gatesBtn" title="Toggle gate markers">Gates: On</button>
+        <button class="btn active" id="passesBtn" title="Toggle free passes">Passes: On</button>
+        <button class="btn active" id="levelsBtn" title="Toggle area levels">Levels: On</button>
+        <div class="edit-dropdown">
+          <button class="btn" id="editToggleBtn" title="Edit markers">Edit</button>
+          <div class="edit-dropdown-menu" id="editDropdown">
+            <button class="btn" id="editGatesBtn">Gates</button>
+            <button class="btn" id="editPassesBtn">Passes</button>
+            <button class="btn" id="editLevelsBtn">Levels</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="separator"></div>
+
+      <div class="tool-group">
+        <button class="btn" id="undoBtn" title="Undo last fill (Ctrl+Z)">Undo</button>
+        <button class="btn danger" id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="edit-bar" id="editBar" style="display:none;">
+  <label id="editLabel">Gate Editor:</label>
+  <button class="btn edit-active" id="editMoveBtn">Move</button>
+  <button class="btn" id="editAddBtn">Add New</button>
+  <button class="btn" id="editRotateBtn" style="display:none;">Rotate</button>
+  <span id="levelPicker" style="display:none;">
+    <button class="btn edit-active" data-lvl="1">1</button>
+    <button class="btn" data-lvl="2">2</button>
+    <button class="btn" data-lvl="3">3</button>
+    <button class="btn" data-lvl="4">4</button>
+    <button class="btn" data-lvl="5">5</button>
+    <button class="btn" data-lvl="6">6</button>
+    <button class="btn" data-lvl="7">7</button>
+  </span>
+  <button class="btn" id="editDeleteBtn">Delete</button>
+  <div class="separator" style="height:20px;"></div>
+  <button class="btn" id="editSaveBtn" style="border-color:#7ed321;color:#7ed321;">Save</button>
+  <button class="btn" id="editExportJsonBtn">Copy JSON</button>
+  <button class="btn danger" id="editDoneBtn">Done</button>
+  <span style="font-size:11px;color:#a0a0b8;margin-left:8px;" id="editHint">Drag to move</span>
+</div>
+
+<div class="canvas-container" id="canvasContainer">
+  <div class="canvas-wrapper" id="canvasWrapper">
+    <canvas id="canvas"></canvas>
+    <canvas id="overlayCanvas"></canvas>
+    <canvas id="levelsCanvas"></canvas>
+  </div>
+</div>
+
+<div class="hint">Click any enclosed area to fill it with the selected color</div>
+
+<script>
+const PALETTE = [
+  '#e94560', '#f5a623', '#f8e71c', '#7ed321', '#4a90d9',
+  '#9013fe', '#50e3c2', '#ff6b6b', '#bd10e0', '#b8e986',
+  '#8b572a', '#417505', '#d0021b', '#9b9b9b', '#ffffff',
+];
+
+
+// Hamburger menu toggle
+document.getElementById('hamburgerBtn').addEventListener('click', () => {
+  document.getElementById('toolbarBody').classList.toggle('open');
+});
+
+// Auto-fade hint after 4s
+setTimeout(() => {
+  const hint = document.querySelector('.hint');
+  if (hint) hint.classList.add('hidden');
+}, 4000);
+
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const overlayCanvas = document.getElementById('overlayCanvas');
+const overlayCtx = overlayCanvas.getContext('2d');
+const levelsCanvas = document.getElementById('levelsCanvas');
+const levelsCtx = levelsCanvas.getContext('2d');
+const container = document.getElementById('canvasContainer');
+const wrapper = document.getElementById('canvasWrapper');
+
+let currentColor = '#4a90d9';
+let eraserMode = false;
+let tolerance = 32;
+let zoom = 1;
+let history = [];
+let baseImageData = null;
+let showGates = true;
+let showPasses = true;
+let showLevels = true;
+let editMode = false;
+let editTarget = 'gates'; // 'gates', 'passes', or 'levels'
+let editTool = 'move'; // 'move', 'add', 'delete', 'rotate'
+let dragIndex = -1;
+let isDragging = false;
+let selectedLevel = 1; // current level number for adding (1-7)
+
+// Gate positions (SVG viewBox coordinates: 933.36 x 960)
+const DEFAULT_GATES = [
+  { x: 44, y: 263, label: '[ 3 ] Small Pass' },
+  { x: 189, y: 262, label: '[ 3 ] Small Pass' },
+  { x: 283, y: 262, label: '[ 6 ] Grand Pass' },
+  { x: 659, y: 261, label: '[ 6 ] Grand Pass' },
+  { x: 759, y: 262, label: '[ 3 ] Small Pass' },
+  { x: 895, y: 262, label: '[ 3 ] Small Pass' },
+  { x: 237, y: 295, label: '[ 4 ] Strife Pass' },
+  { x: 261, y: 381, label: '[ 5 ] Sand Fortress' },
+  { x: 559, y: 333, label: '[ 4 ] Small Pass' },
+  { x: 559, y: 425, label: '[ 6 ] Temple Fortress' },
+  { x: 378, y: 513, label: '[ 6 ] Temple Fortress' },
+  { x: 692, y: 373, label: '[ 4 ] Small Pass' },
+  { x: 808, y: 476, label: '[ 4 ] Strife Pass' },
+  { x: 113, y: 472, label: '[ 4 ] Strife Pass' },
+  { x: 236, y: 570, label: '[ 4 ] Small Pass' },
+  { x: 30, y: 689, label: '[ 3 ] Small Pass' },
+  { x: 201, y: 689, label: '[ 3 ] Small  Pass' },
+  { x: 269, y: 689, label: '[ 6 ] Grand Pass' },
+  { x: 641, y: 689, label: '[ 6 ] Grand Pass' },
+  { x: 738, y: 689, label: '[ 3 ] Small Pass' },
+  { x: 902, y: 687, label: '[ 3 ] Small Pass' },
+  { x: 688, y: 648, label: '[ 4 ] Small Pass' },
+  { x: 668, y: 554, label: '[ 5 ] Sands Fortress' },
+  { x: 379, y: 665, label: '[ 4 ] Small Pass' },
+];
+
+// Load saved positions or use defaults
+// Version tag: bump this when DEFAULT_GATES change to force a refresh
+const GATES_VERSION = 2;
+let GATE_MARKERS = (() => {
+  try {
+    const ver = localStorage.getItem('dw-map-gates-version');
+    if (ver && parseInt(ver) === GATES_VERSION) {
+      const saved = localStorage.getItem('dw-map-gates');
+      if (saved) return JSON.parse(saved);
+    }
+  } catch(e) {}
+  // Clear stale data
+  localStorage.removeItem('dw-map-gates');
+  localStorage.setItem('dw-map-gates-version', GATES_VERSION);
+  return DEFAULT_GATES.map(g => ({...g}));
+})();
+
+// Free passes (no building, just open passages)
+// Format: { x, y, angle } — angle in degrees
+const DEFAULT_PASSES = [
+  { x: 145, y: 282, angle: 270 }, { x: 54, y: 322, angle: 0 },
+  { x: 42, y: 404, angle: 0 }, { x: 145, y: 346, angle: 90 },
+  { x: 146, y: 387, angle: 90 }, { x: 146, y: 444, angle: 90 },
+  { x: 87, y: 508, angle: 90 }, { x: 87, y: 597, angle: 90 },
+  { x: 87, y: 559, angle: 90 }, { x: 26, y: 575, angle: 0 },
+  { x: 88, y: 670, angle: 90 }, { x: 219, y: 622, angle: 0 },
+  { x: 198, y: 542, angle: 0 }, { x: 212, y: 367, angle: 0 },
+  { x: 334, y: 286, angle: 90 }, { x: 334, y: 364, angle: 90 },
+  { x: 402, y: 321, angle: 0 }, { x: 475, y: 287, angle: 90 },
+  { x: 474, y: 365, angle: 90 }, { x: 271, y: 473, angle: 0 },
+  { x: 341, y: 473, angle: 0 }, { x: 304, y: 534, angle: 90 },
+  { x: 271, y: 596, angle: 0 }, { x: 343, y: 596, angle: 0 },
+  { x: 478, y: 656, angle: 90 }, { x: 478, y: 587, angle: 90 },
+  { x: 540, y: 622, angle: 0 }, { x: 596, y: 589, angle: 90 },
+  { x: 596, y: 656, angle: 90 }, { x: 711, y: 581, angle: 0 },
+  { x: 785, y: 659, angle: 90 }, { x: 784, y: 604, angle: 90 },
+  { x: 784, y: 563, angle: 90 }, { x: 785, y: 510, angle: 90 },
+  { x: 904, y: 541, angle: 0 }, { x: 906, y: 625, angle: 0 },
+  { x: 905, y: 369, angle: 0 }, { x: 837, y: 436, angle: 90 },
+  { x: 837, y: 387, angle: 90 }, { x: 836, y: 347, angle: 90 },
+  { x: 835, y: 286, angle: 90 }, { x: 734, y: 322, angle: 0 },
+  { x: 711, y: 402, angle: 0 }, { x: 654, y: 350, angle: 0 },
+  { x: 596, y: 349, angle: 0 }, { x: 596, y: 476, angle: 0 },
+  { x: 657, y: 475, angle: 0 }, { x: 635, y: 436, angle: 90 },
+  { x: 444, y: 442, angle: 135 }, { x: 501, y: 496, angle: 135 },
+  { x: 463, y: 399, angle: 45 }, { x: 396, y: 464, angle: 45 },
+  { x: 483, y: 540, angle: 45 }, { x: 544, y: 471, angle: 45 },
+];
+const PASSES_VERSION = 2;
+let PASS_MARKERS = (() => {
+  try {
+    const ver = localStorage.getItem('dw-map-passes-version');
+    if (ver && parseInt(ver) === PASSES_VERSION) {
+      const saved = localStorage.getItem('dw-map-passes');
+      if (saved) return JSON.parse(saved);
+    }
+  } catch(e) {}
+  localStorage.removeItem('dw-map-passes');
+  localStorage.setItem('dw-map-passes-version', PASSES_VERSION);
+  return DEFAULT_PASSES.map(p => ({...p}));
+})();
+
+// Area levels (large semi-transparent numbers)
+// Format: { x, y, level } — level is 1-7
+const DEFAULT_LEVELS = [
+  {x:473,y:473,level:7},{x:411,y:418,level:6},{x:529,y:419,level:6},
+  {x:528,y:521,level:6},{x:412,y:525,level:6},{x:37,y:119,level:1},
+  {x:122,y:119,level:1},{x:260,y:110,level:1},{x:366,y:121,level:1},
+  {x:471,y:112,level:1},{x:579,y:150,level:1},{x:700,y:106,level:1},
+  {x:862,y:115,level:1},{x:32,y:858,level:1},{x:210,y:843,level:1},
+  {x:358,y:855,level:1},{x:596,y:860,level:1},{x:790,y:861,level:1},
+  {x:893,y:840,level:1},{x:388,y:778,level:1},{x:561,y:795,level:1},
+  {x:70,y:216,level:2},{x:184,y:205,level:2},{x:284,y:207,level:2},
+  {x:374,y:225,level:2},{x:489,y:228,level:2},{x:752,y:173,level:2},
+  {x:887,y:224,level:2},{x:655,y:228,level:2},{x:886,y:733,level:2},
+  {x:721,y:792,level:2},{x:762,y:724,level:2},{x:530,y:723,level:2},
+  {x:303,y:719,level:2},{x:212,y:730,level:2},{x:111,y:766,level:2},
+  {x:35,y:742,level:2},{x:45,y:632,level:3},{x:156,y:656,level:3},
+  {x:156,y:584,level:3},{x:156,y:508,level:3},{x:191,y:420,level:3},
+  {x:187,y:318,level:3},{x:77,y:292,level:3},{x:77,y:366,level:3},
+  {x:80,y:442,level:3},{x:43,y:525,level:3},{x:740,y:535,level:3},
+  {x:761,y:438,level:3},{x:763,y:363,level:3},{x:762,y:298,level:3},
+  {x:883,y:314,level:3},{x:885,y:430,level:3},{x:852,y:509,level:3},
+  {x:854,y:585,level:3},{x:855,y:659,level:3},{x:741,y:637,level:3},
+  {x:285,y:324,level:4},{x:403,y:353,level:4},{x:516,y:327,level:4},
+  {x:620,y:304,level:4},{x:662,y:415,level:4},{x:623,y:516,level:4},
+  {x:639,y:625,level:4},{x:537,y:659,level:4},{x:430,y:624,level:4},
+  {x:308,y:643,level:4},{x:270,y:534,level:4},{x:303,y:427,level:4},
+  {x:340,y:535,level:5},{x:404,y:290,level:5},{x:537,y:588,level:5},
+  {x:598,y:425,level:5},
+];
+const LEVELS_VERSION = 2;
+let LEVEL_MARKERS = (() => {
+  try {
+    const ver = localStorage.getItem('dw-map-levels-version');
+    if (ver && parseInt(ver) === LEVELS_VERSION) {
+      const saved = localStorage.getItem('dw-map-levels');
+      if (saved) return JSON.parse(saved);
+    }
+  } catch(e) {}
+  localStorage.removeItem('dw-map-levels');
+  localStorage.setItem('dw-map-levels-version', LEVELS_VERSION);
+  return DEFAULT_LEVELS.map(l => ({...l}));
+})();
+
+// Build swatches
+const swatchContainer = document.getElementById('swatches');
+PALETTE.forEach((color, i) => {
+  const el = document.createElement('div');
+  el.className = 'swatch' + (color === currentColor ? ' active' : '');
+  el.style.background = color;
+  if (color === '#ffffff') el.style.border = '2px solid #555';
+  el.addEventListener('click', () => selectColor(color, el));
+  swatchContainer.appendChild(el);
+});
+
+function selectColor(color, el) {
+  currentColor = color;
+  eraserMode = false;
+  document.getElementById('eraserBtn').textContent = 'Off';
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+  if (el) el.classList.add('active');
+}
+
+document.getElementById('customColor').addEventListener('input', (e) => {
+  currentColor = e.target.value;
+  eraserMode = false;
+  document.getElementById('eraserBtn').textContent = 'Off';
+  document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+});
+
+document.getElementById('eraserBtn').addEventListener('click', () => {
+  eraserMode = !eraserMode;
+  document.getElementById('eraserBtn').textContent = eraserMode ? 'On' : 'Off';
+  if (eraserMode) document.querySelectorAll('.swatch').forEach(s => s.classList.remove('active'));
+});
+
+const tolInput = document.getElementById('tolerance');
+const tolValue = document.getElementById('toleranceValue');
+tolInput.addEventListener('input', () => {
+  tolerance = parseInt(tolInput.value);
+  tolValue.textContent = tolerance;
+});
+
+// Zoom
+function setZoom(z) {
+  zoom = Math.max(0.25, Math.min(4, z));
+  const w = (canvas.width * zoom) + 'px';
+  const h = (canvas.height * zoom) + 'px';
+  canvas.style.width = w;
+  canvas.style.height = h;
+  overlayCanvas.style.width = w;
+  overlayCanvas.style.height = h;
+  levelsCanvas.style.width = w;
+  levelsCanvas.style.height = h;
+  document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+}
+
+document.getElementById('zoomIn').addEventListener('click', () => setZoom(zoom + 0.25));
+document.getElementById('zoomOut').addEventListener('click', () => setZoom(zoom - 0.25));
+document.getElementById('zoomFit').addEventListener('click', fitZoom);
+
+function fitZoom() {
+  const cw = container.clientWidth - 40;
+  const ch = container.clientHeight - 40;
+  const scale = Math.min(cw / canvas.width, ch / canvas.height, 1);
+  setZoom(scale);
+}
+
+// Watermark
+const WATERMARK_TEXT = '[KOO] Angels Reborn #123';
+
+function drawWatermark(targetCtx, w, h) {
+  const fontSize = Math.round(w * 0.022);
+  targetCtx.save();
+  targetCtx.font = `bold ${fontSize}px sans-serif`;
+
+  // Bottom-right
+  targetCtx.textAlign = 'right';
+  targetCtx.textBaseline = 'bottom';
+  targetCtx.fillStyle = 'rgba(0,0,0,0.18)';
+  targetCtx.fillText(WATERMARK_TEXT, w - 10, h - 8);
+  targetCtx.fillStyle = 'rgba(255,255,255,0.55)';
+  targetCtx.fillText(WATERMARK_TEXT, w - 11, h - 9);
+
+  // Top-left
+  targetCtx.textAlign = 'left';
+  targetCtx.textBaseline = 'top';
+  targetCtx.fillStyle = 'rgba(0,0,0,0.18)';
+  targetCtx.fillText(WATERMARK_TEXT, 10, 8);
+  targetCtx.fillStyle = 'rgba(255,255,255,0.55)';
+  targetCtx.fillText(WATERMARK_TEXT, 9, 7);
+
+  targetCtx.restore();
+}
+
+// Tribe titles in the top/bottom white bands of the SVG
+// SVG viewBox is 933.36 × 960 pt; top band: 0–71pt, bottom band: 889–960pt
+function drawTitles(targetCtx, w, h) {
+  const fontSize = Math.round(h * 0.038); // fits nicely in the ~71pt band
+  targetCtx.save();
+  targetCtx.textAlign = 'center';
+  targetCtx.textBaseline = 'middle';
+
+  // Top: "Order Tribe" — blue
+  targetCtx.font = `bold ${fontSize}px sans-serif`;
+  targetCtx.fillStyle = '#1565C0';
+  targetCtx.fillText('Order Tribe', w * 0.5, h * (35.52 / 960));
+
+  // Bottom: "Vengeance Union" — red
+  targetCtx.fillStyle = '#C62828';
+  targetCtx.fillText('Vengeance Union', w * 0.5, h * (924.48 / 960));
+
+  targetCtx.restore();
+}
+
+// Load SVG onto canvas
+async function loadSVG() {
+  const response = await fetch('dw-map-s6.svg');
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+
+  img.onload = () => {
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+    overlayCanvas.width = canvas.width;
+    overlayCanvas.height = canvas.height;
+    levelsCanvas.width = canvas.width;
+    levelsCanvas.height = canvas.height;
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    drawTitles(ctx, canvas.width, canvas.height);
+    drawWatermark(ctx, canvas.width, canvas.height);
+    baseImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    URL.revokeObjectURL(url);
+    drawOverlay();
+    drawLevels();
+    fitZoom();
+  };
+
+  img.src = url;
+}
+
+// Flood fill
+function floodFill(startX, startY, fillColor) {
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const data = imageData.data;
+  const width = canvas.width;
+  const height = canvas.height;
+
+  const startIdx = (startY * width + startX) * 4;
+  const startR = data[startIdx];
+  const startG = data[startIdx + 1];
+  const startB = data[startIdx + 2];
+
+  // Parse fill color
+  const fr = parseInt(fillColor.slice(1, 3), 16);
+  const fg = parseInt(fillColor.slice(3, 5), 16);
+  const fb = parseInt(fillColor.slice(5, 7), 16);
+
+  // Don't fill if clicking on the same color
+  if (Math.abs(startR - fr) + Math.abs(startG - fg) + Math.abs(startB - fb) < 10) return false;
+
+  const tol = tolerance;
+  const visited = new Uint8Array(width * height);
+
+  function matches(idx) {
+    const r = data[idx];
+    const g = data[idx + 1];
+    const b = data[idx + 2];
+    return Math.abs(r - startR) + Math.abs(g - startG) + Math.abs(b - startB) <= tol;
+  }
+
+  const stack = [startX, startY];
+  let filled = false;
+
+  while (stack.length > 0) {
+    const y = stack.pop();
+    const x = stack.pop();
+
+    if (x < 0 || x >= width || y < 0 || y >= height) continue;
+
+    const pos = y * width + x;
+    if (visited[pos]) continue;
+    visited[pos] = 1;
+
+    const idx = pos * 4;
+    if (!matches(idx)) continue;
+
+    data[idx] = fr;
+    data[idx + 1] = fg;
+    data[idx + 2] = fb;
+    filled = true;
+
+    stack.push(x + 1, y);
+    stack.push(x - 1, y);
+    stack.push(x, y + 1);
+    stack.push(x, y - 1);
+  }
+
+  if (filled) {
+    ctx.putImageData(imageData, 0, 0);
+  }
+  return filled;
+}
+
+// Canvas click handler
+canvas.addEventListener('click', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const x = Math.floor((e.clientX - rect.left) * scaleX);
+  const y = Math.floor((e.clientY - rect.top) * scaleY);
+
+  if (x < 0 || y < 0 || x >= canvas.width || y >= canvas.height) return;
+
+  // Save state for undo
+  history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+  if (history.length > 50) history.shift();
+
+  const color = eraserMode ? '#ffffff' : currentColor;
+  const didFill = floodFill(x, y, color);
+  if (!didFill) history.pop();
+});
+
+// Undo
+function undo() {
+  if (history.length === 0) return;
+  ctx.putImageData(history.pop(), 0, 0);
+}
+
+document.getElementById('undoBtn').addEventListener('click', undo);
+document.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    e.preventDefault();
+    undo();
+  }
+});
+
+// Reset
+document.getElementById('resetBtn').addEventListener('click', () => {
+  if (baseImageData) {
+    history.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
+    ctx.putImageData(baseImageData, 0, 0);
+  }
+});
+
+// Export
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const exportCanvas = document.createElement('canvas');
+  exportCanvas.width = canvas.width;
+  exportCanvas.height = canvas.height;
+  const exportCtx = exportCanvas.getContext('2d');
+  exportCtx.drawImage(canvas, 0, 0);
+  if (showGates || showPasses) exportCtx.drawImage(overlayCanvas, 0, 0);
+  if (showLevels) exportCtx.drawImage(levelsCanvas, 0, 0);
+  // Watermark always baked into export
+  drawWatermark(exportCtx, exportCanvas.width, exportCanvas.height);
+  const link = document.createElement('a');
+  link.download = 'dw-s6-map.png';
+  link.href = exportCanvas.toDataURL('image/png');
+  link.click();
+});
+
+// ========== Drawing ==========
+const SVG_VIEWBOX_W = 933.36;
+const SVG_VIEWBOX_H = 960;
+
+function getScale() {
+  return { x: overlayCanvas.width / SVG_VIEWBOX_W, y: overlayCanvas.height / SVG_VIEWBOX_H };
+}
+
+function drawOverlay(highlightType, highlightIdx) {
+  overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+  const s = getScale();
+
+  // Draw gates
+  if (showGates) {
+    const size = 14 * s.x;
+    const half = size / 2;
+    const fontSize = Math.round(9 * s.x);
+
+    GATE_MARKERS.forEach((gate, i) => {
+      const px = gate.x * s.x;
+      const py = gate.y * s.y;
+      const hl = highlightType === 'gate' && i === highlightIdx;
+
+      overlayCtx.fillStyle = hl ? '#e94560' : '#000000';
+      overlayCtx.fillRect(px - half, py - half, size, size);
+      overlayCtx.strokeStyle = hl ? '#ffff00' : '#ffffff';
+      overlayCtx.lineWidth = (hl ? 2.5 : 1.5) * s.x;
+      overlayCtx.strokeRect(px - half, py - half, size, size);
+
+      overlayCtx.font = `bold ${fontSize}px sans-serif`;
+      overlayCtx.textAlign = 'center';
+      overlayCtx.fillStyle = hl ? '#e94560' : '#000000';
+      overlayCtx.strokeStyle = '#ffffff';
+      overlayCtx.lineWidth = 2.5 * s.x;
+      overlayCtx.strokeText(gate.label, px, py - half - 4 * s.y);
+      overlayCtx.fillText(gate.label, px, py - half - 4 * s.y);
+    });
+  }
+
+  // Draw free passes as  ]  [  with white gap
+  if (showPasses) {
+    PASS_MARKERS.forEach((pass, i) => {
+      const px = pass.x * s.x;
+      const py = pass.y * s.y;
+      const angle = (pass.angle || 0) * Math.PI / 180;
+      const hl = highlightType === 'pass' && i === highlightIdx;
+
+      overlayCtx.save();
+      overlayCtx.translate(px, py);
+      overlayCtx.rotate(angle);
+
+      const gap = 4 * s.x;   // half gap between brackets
+      const bw = 2 * s.x;    // bracket stroke width
+      const bh = 8 * s.x;    // bracket height
+      const bt = 3.5 * s.x;  // bracket tick width
+
+      overlayCtx.lineCap = 'round';
+
+      // White fill in the gap between brackets
+      overlayCtx.fillStyle = '#ffffff';
+      overlayCtx.fillRect(-gap - bw, -bh - bw, 2 * (gap + bw), 2 * (bh + bw));
+
+      // Right bracket  ]  (left side)
+      overlayCtx.strokeStyle = hl ? '#e94560' : '#000000';
+      overlayCtx.lineWidth = bw;
+      overlayCtx.beginPath();
+      overlayCtx.moveTo(-gap - bt, -bh);
+      overlayCtx.lineTo(-gap, -bh);
+      overlayCtx.lineTo(-gap, bh);
+      overlayCtx.lineTo(-gap - bt, bh);
+      overlayCtx.stroke();
+
+      // Left bracket  [  (right side)
+      overlayCtx.beginPath();
+      overlayCtx.moveTo(gap + bt, -bh);
+      overlayCtx.lineTo(gap, -bh);
+      overlayCtx.lineTo(gap, bh);
+      overlayCtx.lineTo(gap + bt, bh);
+      overlayCtx.stroke();
+
+      overlayCtx.restore();
+    });
+  }
+
+  // Levels are drawn on a separate top canvas via drawLevels()
+}
+
+// Draw levels on the top-most canvas so they stay visible over filled colors
+function drawLevels(highlightIdx) {
+  levelsCtx.clearRect(0, 0, levelsCanvas.width, levelsCanvas.height);
+  if (!showLevels) return;
+
+  const s = getScale();
+  const fontSize = Math.round(42 * s.x);
+  levelsCtx.font = `bold ${fontSize}px sans-serif`;
+  levelsCtx.textAlign = 'center';
+  levelsCtx.textBaseline = 'middle';
+
+  LEVEL_MARKERS.forEach((lv, i) => {
+    const px = lv.x * s.x;
+    const py = lv.y * s.y;
+    const hl = i === highlightIdx;
+
+    levelsCtx.globalAlpha = hl ? 0.6 : 0.3;
+    levelsCtx.strokeStyle = '#ffffff';
+    levelsCtx.lineWidth = 4 * s.x;
+    levelsCtx.strokeText(String(lv.level), px, py);
+    levelsCtx.fillStyle = hl ? '#e94560' : '#000000';
+    levelsCtx.fillText(String(lv.level), px, py);
+  });
+  levelsCtx.globalAlpha = 1;
+  levelsCtx.textBaseline = 'alphabetic';
+}
+
+// ========== Hit testing ==========
+function findItemAt(vx, vy, type, threshold) {
+  const t = threshold || 15;
+  const arr = type === 'gate' ? GATE_MARKERS : type === 'pass' ? PASS_MARKERS : LEVEL_MARKERS;
+  let bestIdx = -1, bestDist = Infinity;
+  arr.forEach((item, i) => {
+    const d = Math.hypot(item.x - vx, item.y - vy);
+    if (d < t && d < bestDist) { bestDist = d; bestIdx = i; }
+  });
+  return bestIdx;
+}
+
+function eventToViewBox(e) {
+  const rect = overlayCanvas.getBoundingClientRect();
+  const s = getScale();
+  const cx = (e.clientX - rect.left) * (overlayCanvas.width / rect.width);
+  const cy = (e.clientY - rect.top) * (overlayCanvas.height / rect.height);
+  return { x: cx / s.x, y: cy / s.y };
+}
+
+function getActiveArray() {
+  return editTarget === 'gates' ? GATE_MARKERS : editTarget === 'passes' ? PASS_MARKERS : LEVEL_MARKERS;
+}
+function getActiveType() {
+  return editTarget === 'gates' ? 'gate' : editTarget === 'passes' ? 'pass' : 'level';
+}
+
+// ========== Redraw helpers ==========
+function highlightItem(type, idx) {
+  if (type === 'level') { drawOverlay(); drawLevels(idx); }
+  else { drawOverlay(type, idx); drawLevels(); }
+}
+function redrawAll() { drawOverlay(); drawLevels(); }
+
+// ========== Mouse events ==========
+overlayCanvas.addEventListener('mousedown', (e) => {
+  if (!editMode) return;
+  const v = eventToViewBox(e);
+  const arr = getActiveArray();
+  const type = getActiveType();
+
+  if (editTool === 'move') {
+    const idx = findItemAt(v.x, v.y, type, 20);
+    if (idx >= 0) {
+      dragIndex = idx;
+      isDragging = true;
+      overlayCanvas.style.cursor = 'grabbing';
+      highlightItem(type, idx);
+    }
+  } else if (editTool === 'delete') {
+    const idx = findItemAt(v.x, v.y, type, 20);
+    if (idx >= 0) { arr.splice(idx, 1); redrawAll(); }
+  } else if (editTool === 'add') {
+    if (editTarget === 'gates') {
+      const label = prompt('Gate label:', 'Gate');
+      if (label !== null) {
+        arr.push({ x: Math.round(v.x), y: Math.round(v.y), label });
+        redrawAll();
+      }
+    } else if (editTarget === 'passes') {
+      arr.push({ x: Math.round(v.x), y: Math.round(v.y), angle: 0 });
+      redrawAll();
+    } else {
+      arr.push({ x: Math.round(v.x), y: Math.round(v.y), level: selectedLevel });
+      redrawAll();
+    }
+  } else if (editTool === 'rotate') {
+    const idx = findItemAt(v.x, v.y, type, 20);
+    if (idx >= 0) {
+      arr[idx].angle = ((arr[idx].angle || 0) + 15) % 360;
+      highlightItem(type, idx);
+    }
+  }
+});
+
+overlayCanvas.addEventListener('mousemove', (e) => {
+  if (!editMode) return;
+  const v = eventToViewBox(e);
+  const type = getActiveType();
+
+  if (isDragging && dragIndex >= 0) {
+    const arr = getActiveArray();
+    arr[dragIndex].x = Math.round(v.x);
+    arr[dragIndex].y = Math.round(v.y);
+    highlightItem(type, dragIndex);
+  } else if (editTool === 'move' || editTool === 'delete' || editTool === 'rotate') {
+    const idx = findItemAt(v.x, v.y, type, 20);
+    highlightItem(type, idx);
+    const cursors = { move: 'grab', delete: 'pointer', rotate: 'pointer' };
+    overlayCanvas.style.cursor = idx >= 0 ? cursors[editTool] : 'default';
+  }
+});
+
+overlayCanvas.addEventListener('mouseup', () => {
+  if (isDragging) { isDragging = false; dragIndex = -1; overlayCanvas.style.cursor = 'grab'; redrawAll(); }
+});
+overlayCanvas.addEventListener('mouseleave', () => {
+  if (isDragging) { isDragging = false; dragIndex = -1; redrawAll(); }
+});
+
+// ========== Edit toolbar ==========
+function setEditTool(tool) {
+  editTool = tool;
+  document.getElementById('editMoveBtn').classList.toggle('edit-active', tool === 'move');
+  document.getElementById('editAddBtn').classList.toggle('edit-active', tool === 'add');
+  document.getElementById('editRotateBtn').classList.toggle('edit-active', tool === 'rotate');
+  document.getElementById('editDeleteBtn').classList.toggle('edit-active', tool === 'delete');
+  overlayCanvas.className = tool === 'add' ? 'adding' : 'editing';
+  updateEditHint();
+}
+
+function updateEditHint() {
+  const name = editTarget === 'gates' ? 'gate' : editTarget === 'passes' ? 'pass' : 'level';
+  const hints = {
+    move: `Drag a ${name} to move it`,
+    add: editTarget === 'levels' ? `Click to place level ${selectedLevel}` : `Click to place a new ${name}`,
+    delete: `Click a ${name} to remove it`,
+    rotate: `Click a ${name} to rotate 15°`
+  };
+  document.getElementById('editHint').textContent = hints[editTool] || '';
+}
+
+function flashHint(msg) {
+  document.getElementById('editHint').textContent = msg;
+  setTimeout(updateEditHint, 2000);
+}
+
+function openEditor(target) {
+  editTarget = target;
+  editMode = true;
+  if (target === 'passes') { showPasses = true; document.getElementById('passesBtn').textContent = 'Passes: On'; document.getElementById('passesBtn').classList.add('active'); }
+  else if (target === 'levels') { showLevels = true; document.getElementById('levelsBtn').textContent = 'Levels: On'; document.getElementById('levelsBtn').classList.add('active'); }
+  else { showGates = true; document.getElementById('gatesBtn').textContent = 'Gates: On'; document.getElementById('gatesBtn').classList.add('active'); }
+  const labels = { gates: 'Gate Editor:', passes: 'Pass Editor:', levels: 'Level Editor:' };
+  document.getElementById('editLabel').textContent = labels[target];
+  document.getElementById('editRotateBtn').style.display = target === 'passes' ? '' : 'none';
+  document.getElementById('levelPicker').style.display = target === 'levels' ? '' : 'none';
+  document.getElementById('editBar').style.display = 'flex';
+  setEditTool('move');
+  redrawAll();
+}
+
+document.getElementById('editMoveBtn').addEventListener('click', () => setEditTool('move'));
+document.getElementById('editAddBtn').addEventListener('click', () => setEditTool('add'));
+document.getElementById('editRotateBtn').addEventListener('click', () => setEditTool('rotate'));
+document.getElementById('editDeleteBtn').addEventListener('click', () => setEditTool('delete'));
+
+// Edit dropdown
+const editDropdown = document.getElementById('editDropdown');
+document.getElementById('editToggleBtn').addEventListener('click', (e) => {
+  e.stopPropagation();
+  editDropdown.classList.toggle('open');
+});
+document.addEventListener('click', () => editDropdown.classList.remove('open'));
+
+document.getElementById('editGatesBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('gates'); });
+document.getElementById('editPassesBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('passes'); });
+document.getElementById('editLevelsBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('levels'); });
+
+// Level picker buttons
+document.querySelectorAll('#levelPicker [data-lvl]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    selectedLevel = parseInt(btn.dataset.lvl);
+    document.querySelectorAll('#levelPicker [data-lvl]').forEach(b => b.classList.remove('edit-active'));
+    btn.classList.add('edit-active');
+    updateEditHint();
+  });
+});
+
+document.getElementById('editDoneBtn').addEventListener('click', () => {
+  editMode = false; isDragging = false; dragIndex = -1;
+  document.getElementById('editBar').style.display = 'none';
+  overlayCanvas.className = '';
+  redrawAll();
+});
+
+// Save
+document.getElementById('editSaveBtn').addEventListener('click', () => {
+  if (editTarget === 'gates') {
+    localStorage.setItem('dw-map-gates', JSON.stringify(GATE_MARKERS));
+    localStorage.setItem('dw-map-gates-version', GATES_VERSION);
+  } else if (editTarget === 'passes') {
+    localStorage.setItem('dw-map-passes', JSON.stringify(PASS_MARKERS));
+    localStorage.setItem('dw-map-passes-version', PASSES_VERSION);
+  } else {
+    localStorage.setItem('dw-map-levels', JSON.stringify(LEVEL_MARKERS));
+    localStorage.setItem('dw-map-levels-version', LEVELS_VERSION);
+  }
+  flashHint('Saved!');
+});
+
+// Copy JSON
+document.getElementById('editExportJsonBtn').addEventListener('click', () => {
+  const data = editTarget === 'gates' ? GATE_MARKERS : editTarget === 'passes' ? PASS_MARKERS : LEVEL_MARKERS;
+  navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => flashHint('Copied to clipboard!'));
+});
+
+// Toggle buttons
+document.getElementById('gatesBtn').addEventListener('click', () => {
+  showGates = !showGates;
+  document.getElementById('gatesBtn').textContent = showGates ? 'Gates: On' : 'Gates: Off';
+  document.getElementById('gatesBtn').classList.toggle('active', showGates);
+  redrawAll();
+});
+
+document.getElementById('passesBtn').addEventListener('click', () => {
+  showPasses = !showPasses;
+  document.getElementById('passesBtn').textContent = showPasses ? 'Passes: On' : 'Passes: Off';
+  document.getElementById('passesBtn').classList.toggle('active', showPasses);
+  redrawAll();
+});
+
+document.getElementById('levelsBtn').addEventListener('click', () => {
+  showLevels = !showLevels;
+  document.getElementById('levelsBtn').textContent = showLevels ? 'Levels: On' : 'Levels: Off';
+  document.getElementById('levelsBtn').classList.toggle('active', showLevels);
+  redrawAll();
+});
+
+loadSVG();
+</script>
+
+<footer style="text-align:center; padding:8px; color:#8899aa; font-size:12px; background:#0a1628;">
+  Created by KOO Server 133 &copy; 2026
+</footer>
+</body>
+</html>
