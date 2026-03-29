@@ -360,6 +360,7 @@
             <button class="btn" id="editGatesBtn">Gates</button>
             <button class="btn" id="editPassesBtn">Passes</button>
             <button class="btn" id="editLevelsBtn">Levels</button>
+            <button class="btn" id="editNotesBtn">Notes</button>
           </div>
         </div>
       </div>
@@ -603,6 +604,15 @@ let LEVEL_MARKERS = (() => {
   return DEFAULT_LEVELS.map(l => ({...l}));
 })();
 
+// User notes — { x, y, text } in SVG viewBox coordinates
+let NOTE_MARKERS = (() => {
+  try {
+    const saved = localStorage.getItem('dw-map-notes');
+    if (saved) return JSON.parse(saved);
+  } catch(e) {}
+  return [];
+})();
+
 // Build swatches
 const swatchContainer = document.getElementById('swatches');
 PALETTE.forEach((color, i) => {
@@ -701,18 +711,26 @@ function drawTitles(targetCtx, w, h) {
 }
 
 // Replay shared state from ?state= URL param
+// State format v2: { v: 2, fills: [...], notes: [...] }
+// Legacy v1: plain array of fills
 function replayStateFromURL() {
   const params = new URLSearchParams(window.location.search);
   const encoded = params.get('state');
   if (!encoded) return;
   try {
-    const log = JSON.parse(atob(encoded));
-    log.forEach(({ nx, ny, color }) => {
+    const parsed = JSON.parse(atob(encoded));
+    const fills = Array.isArray(parsed) ? parsed : (parsed.fills || []);
+    const notes = Array.isArray(parsed) ? [] : (parsed.notes || []);
+
+    fills.forEach(({ nx, ny, color }) => {
       const x = Math.round(nx * canvas.width);
       const y = Math.round(ny * canvas.height);
       floodFill(x, y, color);
       fillLog.push({ nx, ny, color });
     });
+
+    notes.forEach(note => NOTE_MARKERS.push(note));
+    if (notes.length > 0) redrawAll();
   } catch {
     console.warn('Invalid state in URL, ignoring.');
   }
@@ -882,11 +900,12 @@ document.getElementById('exportBtn').addEventListener('click', () => {
 
 // Share link
 document.getElementById('shareBtn').addEventListener('click', () => {
-  if (fillLog.length === 0) {
-    alert('Nothing to share yet — fill some areas first!');
+  if (fillLog.length === 0 && NOTE_MARKERS.length === 0) {
+    alert('Nothing to share yet — fill some areas or add notes first!');
     return;
   }
-  const encoded = btoa(JSON.stringify(fillLog));
+  const state = { v: 2, fills: fillLog, notes: NOTE_MARKERS };
+  const encoded = btoa(JSON.stringify(state));
   const url = new URL(window.location.href);
   url.searchParams.set('state', encoded);
   navigator.clipboard.writeText(url.toString()).then(() => {
@@ -984,6 +1003,45 @@ function drawOverlay(highlightType, highlightIdx) {
   }
 
   // Levels are drawn on a separate top canvas via drawLevels()
+
+  // Draw user notes as speech-bubble labels
+  NOTE_MARKERS.forEach((note, i) => {
+    const px = note.x * s.x;
+    const py = note.y * s.y;
+    const hl = highlightType === 'note' && i === highlightIdx;
+    const fontSize = Math.round(13 * s.x);
+    const pad = 6 * s.x;
+    const dotR = 4 * s.x;
+
+    overlayCtx.save();
+    overlayCtx.font = `bold ${fontSize}px sans-serif`;
+    const tw = overlayCtx.measureText(note.text).width;
+    const bw = tw + pad * 2;
+    const bh = fontSize + pad * 2;
+
+    // Bubble background
+    overlayCtx.fillStyle = hl ? 'rgba(233,69,96,0.92)' : 'rgba(22,33,62,0.88)';
+    overlayCtx.strokeStyle = hl ? '#ffff00' : '#a0c4ff';
+    overlayCtx.lineWidth = 1.5 * s.x;
+    const rx = 4 * s.x;
+    overlayCtx.beginPath();
+    overlayCtx.roundRect(px - bw / 2, py - bh - dotR * 2, bw, bh, rx);
+    overlayCtx.fill();
+    overlayCtx.stroke();
+
+    // Dot anchor
+    overlayCtx.beginPath();
+    overlayCtx.arc(px, py, dotR, 0, Math.PI * 2);
+    overlayCtx.fillStyle = hl ? '#e94560' : '#a0c4ff';
+    overlayCtx.fill();
+
+    // Text
+    overlayCtx.fillStyle = '#ffffff';
+    overlayCtx.textAlign = 'center';
+    overlayCtx.textBaseline = 'middle';
+    overlayCtx.fillText(note.text, px, py - bh / 2 - dotR * 2);
+    overlayCtx.restore();
+  });
 }
 
 // Draw levels on the top-most canvas so they stay visible over filled colors
@@ -1016,7 +1074,7 @@ function drawLevels(highlightIdx) {
 // ========== Hit testing ==========
 function findItemAt(vx, vy, type, threshold) {
   const t = threshold || 15;
-  const arr = type === 'gate' ? GATE_MARKERS : type === 'pass' ? PASS_MARKERS : LEVEL_MARKERS;
+  const arr = type === 'gate' ? GATE_MARKERS : type === 'pass' ? PASS_MARKERS : type === 'note' ? NOTE_MARKERS : LEVEL_MARKERS;
   let bestIdx = -1, bestDist = Infinity;
   arr.forEach((item, i) => {
     const d = Math.hypot(item.x - vx, item.y - vy);
@@ -1034,16 +1092,17 @@ function eventToViewBox(e) {
 }
 
 function getActiveArray() {
-  return editTarget === 'gates' ? GATE_MARKERS : editTarget === 'passes' ? PASS_MARKERS : LEVEL_MARKERS;
+  return editTarget === 'gates' ? GATE_MARKERS : editTarget === 'passes' ? PASS_MARKERS : editTarget === 'notes' ? NOTE_MARKERS : LEVEL_MARKERS;
 }
 function getActiveType() {
-  return editTarget === 'gates' ? 'gate' : editTarget === 'passes' ? 'pass' : 'level';
+  return editTarget === 'gates' ? 'gate' : editTarget === 'passes' ? 'pass' : editTarget === 'notes' ? 'note' : 'level';
 }
 
 // ========== Redraw helpers ==========
 function highlightItem(type, idx) {
   if (type === 'level') { drawOverlay(); drawLevels(idx); }
   else { drawOverlay(type, idx); drawLevels(); }
+  // notes are part of overlay, handled by drawOverlay(type, idx) above
 }
 function redrawAll() { drawOverlay(); drawLevels(); }
 
@@ -1075,6 +1134,12 @@ overlayCanvas.addEventListener('mousedown', (e) => {
     } else if (editTarget === 'passes') {
       arr.push({ x: Math.round(v.x), y: Math.round(v.y), angle: 0 });
       redrawAll();
+    } else if (editTarget === 'notes') {
+      const text = prompt('Note text:', '');
+      if (text !== null && text.trim() !== '') {
+        arr.push({ x: Math.round(v.x), y: Math.round(v.y), text: text.trim() });
+        redrawAll();
+      }
     } else {
       arr.push({ x: Math.round(v.x), y: Math.round(v.y), level: selectedLevel });
       redrawAll();
@@ -1125,7 +1190,7 @@ function setEditTool(tool) {
 }
 
 function updateEditHint() {
-  const name = editTarget === 'gates' ? 'gate' : editTarget === 'passes' ? 'pass' : 'level';
+  const name = editTarget === 'gates' ? 'gate' : editTarget === 'passes' ? 'pass' : editTarget === 'notes' ? 'note' : 'level';
   const hints = {
     move: `Drag a ${name} to move it`,
     add: editTarget === 'levels' ? `Click to place level ${selectedLevel}` : `Click to place a new ${name}`,
@@ -1145,8 +1210,8 @@ function openEditor(target) {
   editMode = true;
   if (target === 'passes') { showPasses = true; document.getElementById('passesBtn').textContent = 'Passes: On'; document.getElementById('passesBtn').classList.add('active'); }
   else if (target === 'levels') { showLevels = true; document.getElementById('levelsBtn').textContent = 'Levels: On'; document.getElementById('levelsBtn').classList.add('active'); }
-  else { showGates = true; document.getElementById('gatesBtn').textContent = 'Gates: On'; document.getElementById('gatesBtn').classList.add('active'); }
-  const labels = { gates: 'Gate Editor:', passes: 'Pass Editor:', levels: 'Level Editor:' };
+  else if (target === 'gates') { showGates = true; document.getElementById('gatesBtn').textContent = 'Gates: On'; document.getElementById('gatesBtn').classList.add('active'); }
+  const labels = { gates: 'Gate Editor:', passes: 'Pass Editor:', levels: 'Level Editor:', notes: 'Note Editor:' };
   document.getElementById('editLabel').textContent = labels[target];
   document.getElementById('editRotateBtn').style.display = target === 'passes' ? '' : 'none';
   document.getElementById('levelPicker').style.display = target === 'levels' ? '' : 'none';
@@ -1171,6 +1236,7 @@ document.addEventListener('click', () => editDropdown.classList.remove('open'));
 document.getElementById('editGatesBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('gates'); });
 document.getElementById('editPassesBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('passes'); });
 document.getElementById('editLevelsBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('levels'); });
+document.getElementById('editNotesBtn').addEventListener('click', () => { editDropdown.classList.remove('open'); openEditor('notes'); });
 
 // Level picker buttons
 document.querySelectorAll('#levelPicker [data-lvl]').forEach(btn => {
@@ -1197,6 +1263,8 @@ document.getElementById('editSaveBtn').addEventListener('click', () => {
   } else if (editTarget === 'passes') {
     localStorage.setItem('dw-map-passes', JSON.stringify(PASS_MARKERS));
     localStorage.setItem('dw-map-passes-version', PASSES_VERSION);
+  } else if (editTarget === 'notes') {
+    localStorage.setItem('dw-map-notes', JSON.stringify(NOTE_MARKERS));
   } else {
     localStorage.setItem('dw-map-levels', JSON.stringify(LEVEL_MARKERS));
     localStorage.setItem('dw-map-levels-version', LEVELS_VERSION);
@@ -1206,7 +1274,7 @@ document.getElementById('editSaveBtn').addEventListener('click', () => {
 
 // Copy JSON
 document.getElementById('editExportJsonBtn').addEventListener('click', () => {
-  const data = editTarget === 'gates' ? GATE_MARKERS : editTarget === 'passes' ? PASS_MARKERS : LEVEL_MARKERS;
+  const data = editTarget === 'gates' ? GATE_MARKERS : editTarget === 'passes' ? PASS_MARKERS : editTarget === 'notes' ? NOTE_MARKERS : LEVEL_MARKERS;
   navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => flashHint('Copied to clipboard!'));
 });
 
