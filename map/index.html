@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Dark War: Survival Season 6 Map</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/lz-string/1.5.0/lz-string.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -718,7 +719,9 @@ function replayStateFromURL() {
   const encoded = params.get('state');
   if (!encoded) return;
   try {
-    const parsed = JSON.parse(atob(encoded));
+    // Try LZString first (new format), fall back to plain base64 (legacy links)
+    const json = LZString.decompressFromEncodedURIComponent(encoded) || atob(encoded);
+    const parsed = JSON.parse(json);
     const fills = Array.isArray(parsed) ? parsed : (parsed.fills || []);
     const notes = Array.isArray(parsed) ? [] : (parsed.notes || []);
 
@@ -905,7 +908,7 @@ document.getElementById('shareBtn').addEventListener('click', () => {
     return;
   }
   const state = { v: 2, fills: fillLog, notes: NOTE_MARKERS };
-  const encoded = btoa(JSON.stringify(state));
+  const encoded = LZString.compressToEncodedURIComponent(JSON.stringify(state));
   const url = new URL(window.location.href);
   url.searchParams.set('state', encoded);
   navigator.clipboard.writeText(url.toString()).then(() => {
